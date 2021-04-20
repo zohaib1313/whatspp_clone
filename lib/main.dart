@@ -12,7 +12,7 @@ import 'package:get_storage/get_storage.dart';
 void main() async {
   await GetStorage.init();
   Get.put(MyController());
-  await Firebase.initializeApp();
+   await Firebase.initializeApp();
    runApp(HomeScreen());
   // runApp(ChatUserScreen(MyUser(
   //     name: "Zohaib", phoneNumber: "03062196778", profileImage: "", id: "12")));

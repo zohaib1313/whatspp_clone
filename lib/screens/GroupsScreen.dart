@@ -27,7 +27,7 @@ class _GroupScreenState extends State<GroupScreen> {
         child: ListView.builder(
             itemCount: listOfUsersInChat.length,
             itemBuilder: (context, item) {
-              return MyWidgets.getUseChatRow(listOfUsersInChat[item]);
+              return Container();
             }),
       ),
       floatingActionButton: FloatingActionButton(

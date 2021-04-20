@@ -38,8 +38,8 @@ dependencies:
   firebase_storage:
   get_storage: ^2.0.2
   wave: ^0.2.0
-  sms_autofill: ^1.2.6
-  image_picker: ^0.7.4
+  universal_html:
+  image_picker:
   flutter_spinkit: "^4.1.2"
   bubble: ^1.2.1
 

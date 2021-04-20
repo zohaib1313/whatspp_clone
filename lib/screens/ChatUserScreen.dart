@@ -1,3 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flash_chat/Models/ModelChat.dart';
 import 'package:flash_chat/Models/Users.dart';
 import 'package:flash_chat/utils/Styles.dart';
@@ -8,6 +11,8 @@ import 'package:flutter/services.dart';
 import 'package:bubble/bubble.dart';
 import 'package:get/get.dart';
 
+import 'Widgets/MyWidgets.dart';
+
 class ChatUserScreen extends StatelessWidget {
   final MyUser otherUser;
 
@@ -16,30 +21,19 @@ class ChatUserScreen extends StatelessWidget {
   ChatUserScreen(this.otherUser);
 
   final RxString messageToSent = "".obs;
-  final RxList<ModelChat> listOfChat = List<ModelChat>.empty(growable: true).obs;
-final  ScrollController _scrollController = new ScrollController();
+
+  // final RxList<ModelChat> listOfChat =
+  //     List<ModelChat>.empty(growable: true).obs;
+
+  final ScrollController _scrollController = new ScrollController();
 
   @override
   Widget build(BuildContext context) {
-
-
-    listOfChat.add(ModelChat(
-        id: "",
-        text: "hellow how ",
-        isRead: true,
-        isMe: true,
-        isSent: true,
-        time: "10 january ",
-        type: Type.text));
-
-    listOfChat.add(ModelChat(
-        id: "",
-        text: "hellow how ",
-        isRead: true,
-        isMe: false,
-        isSent: true,
-        time: "10 january ",
-        type: Type.text));
+    final Query chatSnapRef = FirebaseFirestore.instance
+        .collection('Chats')
+        .doc(FirebaseAuth.instance.currentUser.uid)
+        .collection(otherUser.id)
+        .orderBy("time", descending: true);
 
     if (_scrollController.hasClients) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -50,22 +44,23 @@ final  ScrollController _scrollController = new ScrollController();
         );
       });
     }
-
-
-
-    return MaterialApp(
-      home: Scaffold(
+    return Material(
+      child: Scaffold(
         appBar: AppBar(
-          backwardsCompatibility: true,
-          leading: Padding(
-            padding: const EdgeInsets.all(6.0),
-            child: CircleAvatar(
-              backgroundImage: otherUser.profileImage == ''
-                  ? Image.asset("assets/images/place_holder.png").image
-                  : Image.network(otherUser.profileImage).image,
-            ),
+          titleSpacing: -20,
+          title: Row(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: CircleAvatar(
+                  backgroundImage: otherUser.profileImage == ''
+                      ? Image.asset("assets/images/place_holder.png").image
+                      : Image.network(otherUser.profileImage).image,
+                ),
+              ),
+              Text(otherUser.name),
+            ],
           ),
-          title: Text(otherUser.name),
           actions: [
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -90,22 +85,30 @@ final  ScrollController _scrollController = new ScrollController();
             children: [
               Expanded(
                 child: Container(
-                  color: Colors.white.withOpacity(0.5),
-                  child: Obx(
-                    () => ListView.builder(
+                    color: Colors.white.withOpacity(0.5),
+                    child: StreamBuilder(
+                        stream: chatSnapRef.snapshots(),
+                        builder: (BuildContext context,
+                            AsyncSnapshot<QuerySnapshot> snapshot) {
+                          if (snapshot.hasData) {
+                            return ListView(
+                                shrinkWrap: true,
+                                reverse: true,
+                                controller: _scrollController,
+                                children:
+                                    snapshot.data.docs.map((documetnSnap) {
+                                  ModelChat chatModel =
+                                      ModelChat.fromDoucument(documetnSnap);
 
-                      controller: _scrollController,
-                      itemCount: listOfChat.length,
-                      itemBuilder: (item, index) {
-                        return getChatBubble(listOfChat[index]);
-                      },
-                    ),
-                  ),
-                ),
+                                  return getChatBubble(chatModel);
+                                }).toList());
+                          } else {
+                            return MyWidgets.spinkit;
+                          }
+                        })),
               ),
               Material(
                 elevation: 0,
-                color: Colors.white.withOpacity(0.7),
                 child: Container(
                     constraints: BoxConstraints(
                         minWidth: double.infinity, maxHeight: 150),
@@ -160,24 +163,92 @@ final  ScrollController _scrollController = new ScrollController();
                                     ),
                                   )
                                 : GestureDetector(
-                                    onTap: () {
+                                    onTap: () async {
                                       ModelChat modelChat = ModelChat(
-                                          id: "",
-                                          type: Type.text,
-                                          time: "10 january",
-                                          isMe: true,
+                                          id: FirebaseAuth
+                                              .instance.currentUser.uid,
+                                          type: "Text",
+                                          time: DateTime.now()
+                                              .toLocal()
+                                              .toString(),
                                           text: controllerMessageToSend.text,
                                           isRead: false,
                                           isSent: true);
-                                      listOfChat.add(modelChat);
-                                      controllerMessageToSend.clear();
-                                      messageToSent.value="";
 
+                                      controllerMessageToSend.clear();
+
+
+                                      modelChat.deliveryType = "Sent";
+                                      await FirebaseFirestore.instance
+                                          .collection("Chats")
+                                          .doc(FirebaseAuth
+                                              .instance.currentUser.uid)
+                                          .set({
+                                        otherUser.id: {
+                                          "id": otherUser.id,
+                                          "name": "areeba",
+                                          "image": "imageeee",
+                                          "lastMessage": messageToSent.value
+
+                                        }
+                                      }, SetOptions(merge: true));
+                                      //     .set({
+                                      //   "collectionsId": FieldValue.arrayUnion(
+                                      //     [
+                                      //       {
+                                      //         otherUser.id:
+                                      //         otherUser.id
+                                      //       }
+                                      //     ],
+                                      //   )
+                                      // });
+                                      await FirebaseFirestore.instance
+                                          .collection("Chats")
+                                          .doc(FirebaseAuth
+                                              .instance.currentUser.uid)
+                                          .collection(otherUser.id)
+                                          .add(modelChat.toMap());
+
+                                      modelChat.deliveryType = "Received";
+                                      await FirebaseFirestore.instance
+                                          .collection("Chats")
+                                          .doc(otherUser.id)
+                                          //     .set({
+                                          //   "collectionsId": FieldValue.arrayUnion(
+                                          //     [
+                                          //       {
+                                          //         FirebaseAuth.instance.currentUser.uid:
+                                          //         FirebaseAuth.instance.currentUser.uid
+                                          //       }
+                                          //     ],
+                                          //   )
+                                          // });
+                                          .set({
+                                        FirebaseAuth.instance.currentUser.uid:
+                                        {
+                                          "id":FirebaseAuth.instance.currentUser.uid,
+                                          "name": "zohaib",
+                                          "image": "imageeee",
+                                          "lastMessage": messageToSent.value
+                                        }
+                                      }, SetOptions(merge: true));
+                                      // .set({FirebaseAuth.instance.currentUser.uid: FirebaseAuth.instance.currentUser.uid});
+
+                                      await FirebaseFirestore.instance
+                                          .collection("Chats")
+                                          .doc(otherUser.id)
+                                          .collection(FirebaseAuth
+                                              .instance.currentUser.uid)
+                                          .add(modelChat.toMap());
+                                      messageToSent.value = "";
                                       if (_scrollController.hasClients) {
-                                        SchedulerBinding.instance.addPostFrameCallback((_) {
+                                        SchedulerBinding.instance
+                                            .addPostFrameCallback((_) {
                                           _scrollController.animateTo(
-                                            _scrollController.position.maxScrollExtent,
-                                            duration: const Duration(milliseconds: 300),
+                                            _scrollController
+                                                .position.minScrollExtent,
+                                            duration: const Duration(
+                                                milliseconds: 300),
                                             curve: Curves.easeOut,
                                           );
                                         });
@@ -200,8 +271,8 @@ final  ScrollController _scrollController = new ScrollController();
     );
   }
 
-  getChatBubble(ModelChat modelChat) {
-    return !modelChat.isMe
+  Widget getChatBubble(ModelChat modelChat) {
+    return modelChat.deliveryType != "Sent"
         ? Padding(
             padding: const EdgeInsets.all(8.0),
             child: Bubble(

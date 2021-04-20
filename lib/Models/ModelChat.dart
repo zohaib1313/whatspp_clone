@@ -1,28 +1,44 @@
 import 'dart:convert';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class ModelChat {
   String id, text, time;
-  bool isSent, isRead, isMe;
-  Type type;
+  String deliveryType;
+  bool isSent, isRead;
+  String type;
 
   ModelChat(
       {this.id,
       this.text,
       this.time,
+      this.deliveryType,
+
       this.isSent,
       this.isRead,
-      this.isMe,
+
       this.type});
+
+  factory ModelChat.fromDoucument(DocumentSnapshot documentSnapshot) {
+    return ModelChat(
+      id: documentSnapshot.id,
+      text: documentSnapshot['text'] as String,
+      time: documentSnapshot['time'] as String,
+      deliveryType: documentSnapshot['fromKey'] as String,
+
+      isSent: documentSnapshot['isSent'] as bool,
+      isRead: documentSnapshot['isRead'] as bool,
+
+      type: documentSnapshot['type'],
+    );
+  }
 
   factory ModelChat.fromMap(Map<String, dynamic> map) {
     return new ModelChat(
       id: map['id'] as String,
-      text: map['text'] as String,
-      time: map['time'] as String,
-      isSent: map['isSent'] as bool,
+      deliveryType: map['fromKey'] as String,
       isRead: map['isRead'] as bool,
-      isMe: map['isMe'] as bool,
-      type: map['type'] as Type,
+      type: map['type'] ,
     );
   }
 
@@ -32,9 +48,9 @@ class ModelChat {
       'id': this.id,
       'text': this.text,
       'time': this.time,
+      'fromKey': this.deliveryType,
       'isSent': this.isSent,
       'isRead': this.isRead,
-      'isMe': this.isMe,
       'type': this.type,
     } as Map<String, dynamic>;
   }
@@ -43,10 +59,12 @@ class ModelChat {
     return {
       "id": this.id,
       "text": this.text,
+      'fromKey': this.deliveryType,
+
       "time": this.time,
       "isSent": this.isSent,
       "isRead": this.isRead,
-      "isMe": this.isMe,
+
       "type": json.encode(this.type),
     };
   }
@@ -56,17 +74,16 @@ class ModelChat {
       id: myJson["id"],
       text: myJson["text"],
       time: myJson["time"],
+      deliveryType: myJson['fromKey'],
       isSent: myJson["isSent"].toLowerCase() == 'true',
       isRead: myJson["isRead"],
-      isMe: myJson["isMe"],
       type: json.decode(myJson["type"]),
     );
   }
 
   @override
   String toString() {
-    return 'ModelChat{id: $id, text: $text, time: $time, isSent: $isSent, isRead: $isRead, isMe: $isMe, type: $type}';
+    return 'ModelChat{id: $id, text: $text, time: $time, fromKey: $deliveryType isSent: $isSent, isRead: $isRead, type: $type}';
   }
 }
 
-enum Type { image, text, video, audio }

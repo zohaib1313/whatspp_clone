@@ -7,6 +7,7 @@ import 'package:flash_chat/screens/StatusScreen.dart';
 import 'package:flash_chat/utils/SessionManager.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../controller.dart';
@@ -26,6 +27,10 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Colors.blue,
+      statusBarBrightness: Brightness.light,
+    ));
     return Obx(
       () => GetMaterialApp(
         debugShowCheckedModeBanner: false,

@@ -1,5 +1,8 @@
+
 import 'dart:io';
+
 import 'dart:ui';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flash_chat/Models/Users.dart';
 import 'package:flash_chat/screens/Widgets/MyWidgets.dart';
@@ -12,6 +15,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:wave/config.dart';
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -187,23 +191,10 @@ class SignUpScreen extends StatelessWidget {
                                             }
                                             SessionManager.myController
                                                 .isLoading.value = true;
-                                            _auth.verifyPhoneNumber(
-                                              phoneNumber:
-                                                  _phoneController.text.trim(),
-                                              timeout:
-                                                  const Duration(seconds: 60),
-                                              codeAutoRetrievalTimeout: null,
-                                              codeSent: onCodeSent,
-                                              verificationCompleted: null,
-                                              verificationFailed: (failed) {
-                                                Get.snackbar(
-                                                    "Verification Failed ",
-                                                    "$failed",
-                                                    backgroundColor:
-                                                        Colors.blue,
-                                                    colorText: Colors.white);
-                                              },
-                                            );
+
+                                            kIsWeb
+                                                ? webPhoneAuth()
+                                                : androidPhoneVerification();
                                           },
                                         ),
                                       ),
@@ -223,8 +214,20 @@ class SignUpScreen extends StatelessWidget {
                           child: Stack(
                             alignment: Alignment.bottomRight,
                             children: [
-                              Obx(
-                                () => CircleAvatar(
+                              Obx(() {
+
+                                // if(SessionManager.myController.selectedImagePath.value.isNotEmpty)
+                                // FirebaseStorage.instance
+                                //     .ref()
+                                //     .child("Users")
+                                //     .child("zohaib")
+                                //     .child("ProfileImage")
+                                //     .putFile(File(SessionManager
+                                //         .myController.selectedImagePath.value))
+                                //     .then((snapshot) => {print(snapshot)})
+                                //     .catchError((err) => {print(err)});
+
+                                return CircleAvatar(
                                   radius: 33,
                                   backgroundImage: SessionManager.myController
                                               .selectedImagePath.value ==
@@ -232,12 +235,18 @@ class SignUpScreen extends StatelessWidget {
                                       ? Image.asset(
                                               "assets/images/place_holder.png")
                                           .image
-                                      : Image.file(
-                                          File(SessionManager.myController
-                                              .selectedImagePath.value),
-                                        ).image,
-                                ),
-                              ),
+                                      : kIsWeb
+                                          ? Image.network((SessionManager
+                                                  .myController
+                                                  .selectedImagePath
+                                                  .value))
+                                              .image
+                                          : Image.file(
+                                              File(SessionManager.myController
+                                                  .selectedImagePath.value),
+                                            ).image,
+                                );
+                              }),
                               GestureDetector(
                                 onTap: () {
                                   SessionManager.myController.getImage();
@@ -262,8 +271,14 @@ class SignUpScreen extends StatelessWidget {
     );
   }
 
-  void onCodeSent(String verificationId, int forceResendingToken) {
-    print("code sent  $verificationId");
+
+
+
+  void onCodeSent(
+      {String verificationId,
+      int forceResendingToken,
+      ConfirmationResult confirmationResult}) {
+    print("code sent  $confirmationResult");
     SessionManager.myController.isLoading.value = false;
     Get.dialog(
       Container(
@@ -319,88 +334,35 @@ class SignUpScreen extends StatelessWidget {
                                           SessionManager.myController.isLoading
                                               .value = true;
                                           try {
-                                            PhoneAuthCredential credential =
-                                                PhoneAuthProvider.credential(
-                                                    verificationId:
-                                                        verificationId,
-                                                    smsCode: _codeController
-                                                        .text
-                                                        .trim());
-                                            UserCredential result = await _auth
-                                                .signInWithCredential(
-                                                    credential);
-                                            User user = result.user;
-                                            if (user != null) {
-                                              var imagePath = SessionManager
-                                                  .myController
-                                                  .selectedImagePath
-                                                  .value;
-
-                                              // String imageName = imagePath
-                                              //     .substring(
-                                              //         imagePath.lastIndexOf("/"),
-                                              //         imagePath.lastIndexOf("."))
-                                              //     .replaceAll("/", "");
-
-                                              MyUser myUser = MyUser(
-                                                  id: user.uid,
-                                                  name: _nameController.text
-                                                      .toString(),
-                                                  profileImage: "",
-                                                  phoneNumber: _phoneController
-                                                      .text
-                                                      .toString());
-
-                                              FirebaseStorage.instance
-                                                  .ref()
-                                                  .child("Users")
-                                                  .child(myUser.id)
-                                                  .child("ProfileImage")
-                                                  .putFile(File(imagePath))
-                                                  .then((snapshot) async {
-                                                if (snapshot.state ==
-                                                    TaskState.success) {
-                                                  snapshot.ref
-                                                      .getDownloadURL()
-                                                      .then((downloadUrl) {
-                                                    myUser.profileImage =
-                                                        downloadUrl.toString();
-
-                                                    FirebaseFirestore.instance
-                                                        .collection("Users")
-                                                        .doc(myUser.id)
-                                                        .set(myUser.toMap())
-                                                        .then((value) {
-                                                      GetStorage().write(
-                                                          AppConstants.KEY_USER,
-                                                          myUser.toJson());
-                                                      SessionManager
-                                                          .myController
-                                                          .isLoading
-                                                          .value = false;
-                                                      SessionManager
-                                                          .setIsLoggedIn = true;
-                                                      Get.back();
-                                                    }).catchError((error) => print(
-                                                            "Failed to add user: $error"));
-                                                  });
-                                                } else {
-                                                  print(
-                                                      'Error from image repo ${snapshot.state.toString()}');
-                                                }
-                                              });
+                                            UserCredential result;
+                                            if (kIsWeb) {
+                                              print("logging in with web");
+                                              result = await confirmationResult
+                                                  .confirm(
+                                                      _codeController.text);
+                                              print(result.user);
+                                              loginWithUser(result.user);
                                             } else {
-                                              Get.snackbar(
-                                                  "Verification Failed ",
-                                                  "Invalid code",
-                                                  backgroundColor: Colors.blue,
-                                                  colorText: Colors.white);
-                                              SessionManager.myController
-                                                  .isLoading.value = false;
+                                              print("logging in with android");
+
+                                              PhoneAuthCredential credential =
+                                                  PhoneAuthProvider.credential(
+                                                      verificationId:
+                                                          verificationId,
+                                                      smsCode: _codeController
+                                                          .text
+                                                          .trim());
+
+                                              result = await _auth
+                                                  .signInWithCredential(
+                                                      credential);
+                                              loginWithUser(result.user);
                                             }
                                           } catch (e) {
+                                            print(e.toString());
+
                                             Get.snackbar("Verification Failed ",
-                                                "Invalid code",
+                                                e.toString(),
                                                 backgroundColor: Colors.blue,
                                                 colorText: Colors.white);
                                             SessionManager.myController
@@ -432,11 +394,85 @@ class SignUpScreen extends StatelessWidget {
     );
   }
 
-  void onVerificatoinComplate(PhoneAuthCredential phoneAuthCredential) async {
-    print("verificaton complete");
-    UserCredential result =
-        await _auth.signInWithCredential(phoneAuthCredential);
-    User user = result.user;
+  androidPhoneVerification() {
+    _auth
+        .verifyPhoneNumber(
+          phoneNumber: _phoneController.text.trim(),
+          timeout: const Duration(seconds: 60),
+          codeAutoRetrievalTimeout: null,
+          codeSent: (verficaiotndi, resit) => onCodeSent(
+              verificationId: verficaiotndi, forceResendingToken: resit),
+          verificationCompleted: null,
+          verificationFailed: (failed) {
+            Get.snackbar("Verification Failed ", "$failed",
+                backgroundColor: Colors.blue, colorText: Colors.white);
+          },
+        )
+        .then((value) => () {
+              _phoneController.clear();
+            });
+  }
+
+  webPhoneAuth() {
+    // Wait for the user to complete the reCAPTCHA & for a SMS code to be sent.
+    _auth
+        .signInWithPhoneNumber(
+            _phoneController.text.trim(),
+            RecaptchaVerifier(
+              size: RecaptchaVerifierSize.compact,
+              theme: RecaptchaVerifierTheme.dark,
+              onSuccess: () => print('reCAPTCHA complete!'),
+              onError: (FirebaseAuthException error) => print(error),
+              onExpired: () => print('reCAPTCHA Expired!'),
+            ))
+        .then((value) => onCodeSent(confirmationResult: value))
+        .catchError((err) => Get.snackbar("Error", err.toString()));
+  }
+
+  void loginWithUser(User user) {
+    var imagePath = SessionManager.myController.selectedImagePath.value;
+    // String imageName = imagePath
+    //     .substring(
+    //         imagePath.lastIndexOf("/"),
+    //         imagePath.lastIndexOf("."))
+    //     .replaceAll("/", "");
+    print("logging in");
+    print("image path =" + imagePath);
+
+    MyUser myUser = MyUser(
+        id: user.uid,
+        name: _nameController.text.toString(),
+        profileImage: "",
+        phoneNumber: _phoneController.text.toString());
+    GetStorage().write(AppConstants.KEY_USER, myUser.toJson());
+    SessionManager.myController.isLoading.value = false;
     SessionManager.setIsLoggedIn = true;
+    FirebaseStorage.instance
+        .ref()
+        .child("Users")
+        .child(myUser.id)
+        .child("ProfileImage")
+        .putFile(File(imagePath))
+        .then((snapshot) {
+      if (snapshot.state == TaskState.success) {
+        print("logging in success");
+        snapshot.ref.getDownloadURL().then((downloadUrl) {
+          myUser.profileImage = downloadUrl.toString();
+          FirebaseFirestore.instance
+              .collection("Users")
+              .doc(myUser.id)
+              .set(myUser.toMap())
+              .then((value) {
+            GetStorage().write(AppConstants.KEY_USER, myUser.toJson());
+            SessionManager.myController.isLoading.value = false;
+            SessionManager.setIsLoggedIn = true;
+            Get.back();
+          }).catchError((error) => print("Failed to add user: $error"));
+        });
+      } else {
+        print("logging failed");
+        print('Error from image repo ${snapshot.state.toString()}');
+      }
+    });
   }
 }

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flash_chat/Models/Users.dart';
 import 'package:flash_chat/screens/ChatScreenMain.dart';
 import 'package:flash_chat/screens/ChatUserScreen.dart';
@@ -10,8 +11,9 @@ import 'package:get/get.dart';
 final List<MyUser> listOfUsers = List.empty(growable: true);
 
 class UsersScreen extends StatelessWidget {
-  final CollectionReference users =
+  final Query users =
       FirebaseFirestore.instance.collection('Users');
+          //.where("id",isNotEqualTo: FirebaseAuth.instance.currentUser.uid);
 
   @override
   Widget build(BuildContext context) {
@@ -39,26 +41,26 @@ class UsersScreen extends StatelessWidget {
           ],
         ),
         body: StreamBuilder(
-            stream: users.snapshots(),
-            builder:
-                (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-              if (snapshot.hasData) {
-                listOfUsers.clear();
-                return ListView(
-                    children:
-                        snapshot.data.docs.map((DocumentSnapshot document) {
-                  MyUser myUser = MyUser.fromDoucument(document);
-                  listOfUsers.add(myUser);
-                  return GestureDetector(
-                      onTap: () {
-                        Get.to(ChatUserScreen(myUser));
-                      },
-                      child: MyWidgets.getUserRow(myUser));
-                }).toList());
-              } else {
-                return MyWidgets.spinkit;
-              }
-            }),
+          stream: users.snapshots(),
+          builder:
+              (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+            if (snapshot.hasData) {
+              listOfUsers.clear();
+              return ListView(
+                  children: snapshot.data.docs.map((DocumentSnapshot document) {
+                MyUser myUser = MyUser.fromDoucument(document);
+                listOfUsers.add(myUser);
+                return GestureDetector(
+                    onTap: () {
+                      Get.to(() => ChatUserScreen(myUser));
+                    },
+                    child: MyWidgets.getUserRow(myUser));
+              }).toList());
+            } else {
+              return MyWidgets.spinkit;
+            }
+          },
+        ),
       ),
     );
   }

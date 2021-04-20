@@ -1,3 +1,4 @@
+import 'package:flash_chat/Models/ModelChat.dart';
 import 'package:flash_chat/Models/Users.dart';
 import 'package:flash_chat/utils/SessionManager.dart';
 import 'package:flash_chat/utils/Styles.dart';
@@ -7,7 +8,6 @@ import 'package:get/get.dart';
 import 'package:wave/config.dart';
 import 'package:wave/wave.dart';
 
-import '../../controller.dart';
 
 class MyWidgets {
   static AppBar buildAppBar() {
@@ -106,7 +106,7 @@ class MyWidgets {
     );
   }
 
-  static Widget getUseChatRow(MyUser user) {
+  static Widget getUseChatRow({String name,String lastMessage,String timeDate,String image}) {
     return Container(
       padding:
           const EdgeInsets.only(left: 5.0, right: 3.0, top: 8.0, bottom: 8.0),
@@ -126,10 +126,10 @@ class MyWidgets {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      user.phoneNumber,
+                     name,
                       style: Style.kTextStyleBol,
                     ),
-                    Text("Whatsapp message", style: Style.kTextStyleNormal),
+                    Text(lastMessage, style: Style.kTextStyleNormal),
                   ],
                 ),
               )),
@@ -137,7 +137,7 @@ class MyWidgets {
               child: Column(
             children: [
               Text(
-                "01:09",
+                timeDate,
                 style: Style.kTextStyleNormal,
               ),
               Icon(Icons.online_prediction_rounded)
@@ -207,4 +207,51 @@ class MyWidgets {
       ),
     );
   }
+  static Widget get showLoading => ListView.builder(
+      itemCount: 10,
+      shrinkWrap: true,
+      itemBuilder: (context,index){
+        return
+          AnimatedBuilder(
+            animation: Tween(begin: 0.1, end: 8.0).animate(
+                SessionManager.myController.listAnimationController),
+            builder: (context, child) {
+              return ShaderMask(
+                blendMode: BlendMode.srcATop,
+                shaderCallback: (bounds) {
+                  return LinearGradient(
+                    colors: [
+                      Color(0xF2F4EBEE),
+                      Color(0xF7F4F4F4),
+                      Color(0xFAEBEBF4),
+                    ],
+                    stops: [
+                      0.1,
+                      0.3,
+                      0.4,
+                    ],
+                    begin: Alignment(-1.0, -0.3),
+                    end: Alignment(1.0, 0.3),
+                    tileMode: TileMode.clamp,
+                    transform: SlidingGradientTransform(SessionManager
+                        .myController.listAnimationController.value),
+                  ).createShader(bounds);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: MyWidgets.getUseChatRow(
+                      name: "Name",
+                      image: "",
+                      lastMessage: "Message",
+                      timeDate: ".."),
+                ),
+              );
+            },
+          );
+      }
+  );
 }
+
+
+
+
