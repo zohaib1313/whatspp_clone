@@ -10,7 +10,8 @@ firestore for backend<br />
 firestoreage<br />
 push notifications<br />
 
-[url=https://postimg.cc/rKK87bSp][img]https://i.postimg.cc/rKK87bSp/screen-1.jpg[/img][/url]
+[url=https://postimg.cc/rKK87bSp][img]<br />
+https://i.postimg.cc/rKK87bSp/screen-1.jpg[/img][/url]
 <br />
 [url=https://postimg.cc/G9prsNgj][img]https://i.postimg.cc/G9prsNgj/screen-10.jpg[/img][/url]
 <br />
