@@ -9,7 +9,7 @@ class MyUser {
   String phoneNumber;
   MyUser({this.id, this.name, this.profileImage, this.phoneNumber});
 
-  Map<String, dynamic> toMap() {
+    Map<String, dynamic> toMap() {
     return {
       'id': id,
       'name': name,

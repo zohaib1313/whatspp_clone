@@ -1,5 +1,8 @@
 
+import 'package:flash_chat/Models/Users.dart';
+import 'package:flash_chat/utils/AppConstants.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import '../controller.dart';
 
 class SessionManager {
@@ -12,6 +15,9 @@ class SessionManager {
   static set setIsLoggedIn(bool value) {
     myController.setIsLoggedIn = value;
   }
+
+  static MyUser getCurrentUser()=>MyUser.fromJson(GetStorage().read(AppConstants.KEY_USER));
+
 
   // static getUser() {
   //   if (_myUser == null) {

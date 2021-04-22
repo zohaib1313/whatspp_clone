@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flash_chat/Models/ModelChat.dart';
 import 'package:flash_chat/Models/Users.dart';
+import 'package:flash_chat/utils/AppConstants.dart';
 import 'package:flash_chat/utils/Styles.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -10,12 +11,13 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:bubble/bubble.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 
 import 'Widgets/MyWidgets.dart';
 
 class ChatUserScreen extends StatelessWidget {
   final MyUser otherUser;
-
+ final MyUser currentUser=MyUser.fromJson(GetStorage().read(AppConstants.KEY_USER));
   final controllerMessageToSend = TextEditingController();
 
   ChatUserScreen(this.otherUser);
@@ -29,11 +31,9 @@ class ChatUserScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Query chatSnapRef = FirebaseFirestore.instance
-        .collection('Chats')
-        .doc(FirebaseAuth.instance.currentUser.uid)
-        .collection(otherUser.id)
-        .orderBy("time", descending: true);
+    print(currentUser.toString());
+
+
 
     if (_scrollController.hasClients) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -87,7 +87,11 @@ class ChatUserScreen extends StatelessWidget {
                 child: Container(
                     color: Colors.white.withOpacity(0.5),
                     child: StreamBuilder(
-                        stream: chatSnapRef.snapshots(),
+                        stream: FirebaseFirestore.instance
+                            .collection('Chats')
+                            .doc(FirebaseAuth.instance.currentUser.uid)
+                            .collection(otherUser.id)
+                            .orderBy("time", descending: true).snapshots(),
                         builder: (BuildContext context,
                             AsyncSnapshot<QuerySnapshot> snapshot) {
                           if (snapshot.hasData) {
@@ -165,8 +169,7 @@ class ChatUserScreen extends StatelessWidget {
                                 : GestureDetector(
                                     onTap: () async {
                                       ModelChat modelChat = ModelChat(
-                                          id: FirebaseAuth
-                                              .instance.currentUser.uid,
+                                          id: currentUser.id,
                                           type: "Text",
                                           time: DateTime.now()
                                               .toLocal()
@@ -177,70 +180,59 @@ class ChatUserScreen extends StatelessWidget {
 
                                       controllerMessageToSend.clear();
 
-
+                                    ////sender
                                       modelChat.deliveryType = "Sent";
                                       await FirebaseFirestore.instance
                                           .collection("Chats")
-                                          .doc(FirebaseAuth
-                                              .instance.currentUser.uid)
+                                          .doc(currentUser.id)
                                           .set({
                                         otherUser.id: {
                                           "id": otherUser.id,
-                                          "name": "areeba",
-                                          "image": "imageeee",
+                                          "name": otherUser.name,
+                                          "dateTime":DateTime.now()
+                                              .toLocal()
+                                              .toString(),
+                                          "image": otherUser.profileImage,
                                           "lastMessage": messageToSent.value
-
                                         }
                                       }, SetOptions(merge: true));
-                                      //     .set({
-                                      //   "collectionsId": FieldValue.arrayUnion(
-                                      //     [
-                                      //       {
-                                      //         otherUser.id:
-                                      //         otherUser.id
-                                      //       }
-                                      //     ],
-                                      //   )
-                                      // });
                                       await FirebaseFirestore.instance
                                           .collection("Chats")
-                                          .doc(FirebaseAuth
-                                              .instance.currentUser.uid)
+                                          .doc(currentUser.id)
                                           .collection(otherUser.id)
                                           .add(modelChat.toMap());
 
+
+
+                                      ///receiver
                                       modelChat.deliveryType = "Received";
                                       await FirebaseFirestore.instance
                                           .collection("Chats")
                                           .doc(otherUser.id)
-                                          //     .set({
-                                          //   "collectionsId": FieldValue.arrayUnion(
-                                          //     [
-                                          //       {
-                                          //         FirebaseAuth.instance.currentUser.uid:
-                                          //         FirebaseAuth.instance.currentUser.uid
-                                          //       }
-                                          //     ],
-                                          //   )
-                                          // });
                                           .set({
-                                        FirebaseAuth.instance.currentUser.uid:
-                                        {
-                                          "id":FirebaseAuth.instance.currentUser.uid,
-                                          "name": "zohaib",
-                                          "image": "imageeee",
+                                        FirebaseAuth.instance.currentUser.uid: {
+                                          "id":currentUser.id,
+                                          "name": currentUser.name,
+                                          "dateTime":DateTime.now()
+                                              .toLocal()
+                                              .toString(),
+                                          "image": currentUser.profileImage,
                                           "lastMessage": messageToSent.value
                                         }
                                       }, SetOptions(merge: true));
-                                      // .set({FirebaseAuth.instance.currentUser.uid: FirebaseAuth.instance.currentUser.uid});
 
                                       await FirebaseFirestore.instance
                                           .collection("Chats")
                                           .doc(otherUser.id)
-                                          .collection(FirebaseAuth
-                                              .instance.currentUser.uid)
+                                          .collection(currentUser.id)
                                           .add(modelChat.toMap());
                                       messageToSent.value = "";
+
+
+
+
+
+
                                       if (_scrollController.hasClients) {
                                         SchedulerBinding.instance
                                             .addPostFrameCallback((_) {

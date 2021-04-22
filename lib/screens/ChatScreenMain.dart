@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:flash_chat/Models/Users.dart';
+import 'package:flash_chat/screens/ChatUserScreen.dart';
 import 'package:flash_chat/screens/UsersScreen.dart';
 import 'package:flash_chat/utils/SessionManager.dart';
 import 'package:flash_chat/utils/Styles.dart';
@@ -11,29 +12,10 @@ import 'package:get/get.dart';
 
 import 'Widgets/MyWidgets.dart';
 
-class ChatScreenMain extends StatefulWidget {
-  static const String ID = "chat_screen";
 
-  @override
-  _ChatScreenMainState createState() => _ChatScreenMainState();
-}
-
-class _ChatScreenMainState extends State<ChatScreenMain> {
-
+class ChatScreenMain extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    //
-    // if (snapshot.hasData) {
-    //   return ListView(
-    //       shrinkWrap: true,
-    //       reverse: true,
-    //       children: snapshot.data.docs.map((documetnSnap) {
-    //         print(documetnSnap.toString() +" ......");
-    //         return MyWidgets.getUseChatRow(MyUser.fromDoucument(documetnSnap));
-    //       }).toList());
-    // } else {
-    //   return MyWidgets.spinkit;
-    // }
     return Scaffold(
       appBar: MyWidgets.buildAppBar(),
       body: Container(
@@ -45,48 +27,44 @@ class _ChatScreenMainState extends State<ChatScreenMain> {
           builder:
               (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
 
+            print(snapshot.data.isBlank);
 
-        if(snapshot.connectionState==ConnectionState.waiting){
-          return MyWidgets.showLoading;
-        }else if ( snapshot.connectionState==ConnectionState.done){
-          if (snapshot.hasData) {
-            // print(snapshot.data.data().values);
-            snapshot.data.data().values.forEach((element) {
-              print(element);
-            });
+            if (snapshot.hasData && snapshot.data.data()!=null) {
+              return ListView(
+                  children: snapshot.data.data().values.map((document) {
 
-            // FirebaseFirestore.instance.collection("Chats").doc(
-            //     FirebaseAuth.instance.currentUser.uid).collection(
-            //     FirebaseAuth.instance.currentUser.uid).get().then((snap) {
-            //   snap.docs.forEach((element) {
-            //     print(element.id);
-            //   });
-            // });
+                    print(document);
+                    var id=document["id"];
+                    var name=document["name"];
+                    var image=document["image"];
+                    var dateTime=document["dateTime"];
+                    var lastMessage=document["lastMessage"];
 
-            //  print(otherUserId.id);
-            return ListView(
-                children: snapshot.data.data().values.map((document) {
-                  return Container();
-                }).toList());
-          } else {
-            print("loading");
-            return MyWidgets.showLoading;
-          }
-        }else{
-          return MyWidgets.showLoading;
-        }
-
-
+                    return GestureDetector(
+                      onTap:()=>Get.to(() => ChatUserScreen(MyUser(id: id,name:name,profileImage: image))) ,
+                      child: Container(
+                  child: MyWidgets.getUseChatRow(name: name,image: image,lastMessage: lastMessage,timeDate: dateTime),
+                ),
+                    );
+              }).toList());
+            } else {
+              return Center(
+                child: Container(
+                  child: Text("No Chat"),
+                ),
+              );
+            }
           },
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.green,
+
         onPressed: () {
           Get.to(() => UsersScreen());
         },
-        child: Icon(Icons.message),
+        child: Icon(Icons.message,color: Style.kSecondaryColor,),
       ),
     );
   }
 }
-

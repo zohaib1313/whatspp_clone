@@ -1,4 +1,3 @@
-
 import 'dart:io';
 
 import 'dart:ui';
@@ -34,20 +33,20 @@ class SignUpScreen extends StatelessWidget {
     return SafeArea(
       child: Scaffold(
           body: Container(
-        color: Colors.white,
+        color: Style.kSecondaryColor,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Transform.rotate(
               angle: -math.pi / 1,
               child: MyWidgets.buildCard(
-                  backgroundColor: Colors.white,
+                  backgroundColor:Style.kSecondaryColor,
                   config: CustomConfig(
                     colors: [
-                      Colors.blue[400],
-                      Colors.blue[300],
-                      Colors.blue[200],
-                      Colors.blue[100]
+                      Style.kPrimaryColor[400],
+                      Style.kPrimaryColor[300],
+                      Style.kPrimaryColor[200],
+                      Style.kPrimaryColor[100]
                     ],
                     durations: [18000, 8000, 5000, 12000],
                     heightPercentages: [0.1, 0.2, 0.3, 0.4],
@@ -83,10 +82,10 @@ class SignUpScreen extends StatelessWidget {
                     children: [
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.blue,
+                          color:  Style.kPrimaryColor,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.grey,
+                              color:  Style.kPrimaryColor,
                               offset: Offset(1.0, 1.0), //(x,y)
                               blurRadius: 6.0,
                             ),
@@ -185,8 +184,8 @@ class SignUpScreen extends StatelessWidget {
                                                 '') {
                                               Get.snackbar(
                                                   "Select Profile Image", "",
-                                                  backgroundColor: Colors.blue,
-                                                  colorText: Colors.white);
+                                                  backgroundColor:  Style.kPrimaryColor,
+                                                  colorText:  Style.kSecondaryColor);
                                               return;
                                             }
                                             SessionManager.myController
@@ -215,7 +214,6 @@ class SignUpScreen extends StatelessWidget {
                             alignment: Alignment.bottomRight,
                             children: [
                               Obx(() {
-
                                 // if(SessionManager.myController.selectedImagePath.value.isNotEmpty)
                                 // FirebaseStorage.instance
                                 //     .ref()
@@ -253,7 +251,7 @@ class SignUpScreen extends StatelessWidget {
                                 },
                                 child: CircleAvatar(
                                   radius: 12,
-                                  child: Icon(Icons.add),
+                                  child: Icon(Icons.add,color:  Style.kPrimaryColor,),
                                 ),
                               ),
                             ],
@@ -270,9 +268,6 @@ class SignUpScreen extends StatelessWidget {
       )),
     );
   }
-
-
-
 
   void onCodeSent(
       {String verificationId,
@@ -291,7 +286,7 @@ class SignUpScreen extends StatelessWidget {
                 child: Material(
                   borderRadius: BorderRadius.all(Radius.circular(20)),
                   elevation: 12,
-                  color: Colors.blue.withOpacity(0.8),
+                  color: Style.kPrimaryColor.withOpacity(0.8),
                   child: Padding(
                     padding: const EdgeInsets.all(10.0),
                     child: Column(
@@ -363,7 +358,7 @@ class SignUpScreen extends StatelessWidget {
 
                                             Get.snackbar("Verification Failed ",
                                                 e.toString(),
-                                                backgroundColor: Colors.blue,
+                                                backgroundColor:  Style.kPrimaryColor,
                                                 colorText: Colors.white);
                                             SessionManager.myController
                                                 .isLoading.value = false;
@@ -371,7 +366,7 @@ class SignUpScreen extends StatelessWidget {
                                         } else {
                                           Get.snackbar(
                                               "Enter verification code ", "",
-                                              backgroundColor: Colors.blue,
+                                              backgroundColor:  Style.kPrimaryColor,
                                               colorText: Colors.white);
                                           SessionManager.myController.isLoading
                                               .value = false;
@@ -405,7 +400,8 @@ class SignUpScreen extends StatelessWidget {
           verificationCompleted: null,
           verificationFailed: (failed) {
             Get.snackbar("Verification Failed ", "$failed",
-                backgroundColor: Colors.blue, colorText: Colors.white);
+                backgroundColor: Style.kPrimaryColor,
+                colorText: Style.kSecondaryColor);
           },
         )
         .then((value) => () {
@@ -431,11 +427,7 @@ class SignUpScreen extends StatelessWidget {
 
   void loginWithUser(User user) {
     var imagePath = SessionManager.myController.selectedImagePath.value;
-    // String imageName = imagePath
-    //     .substring(
-    //         imagePath.lastIndexOf("/"),
-    //         imagePath.lastIndexOf("."))
-    //     .replaceAll("/", "");
+
     print("logging in");
     print("image path =" + imagePath);
 
@@ -452,6 +444,7 @@ class SignUpScreen extends StatelessWidget {
         .child("Users")
         .child(myUser.id)
         .child("ProfileImage")
+        .child(File(imagePath).uri.pathSegments.last)
         .putFile(File(imagePath))
         .then((snapshot) {
       if (snapshot.state == TaskState.success) {
@@ -463,10 +456,12 @@ class SignUpScreen extends StatelessWidget {
               .doc(myUser.id)
               .set(myUser.toMap())
               .then((value) {
+            Get.back();
+            SessionManager.myController.selectedImagePath.value="";
             GetStorage().write(AppConstants.KEY_USER, myUser.toJson());
             SessionManager.myController.isLoading.value = false;
             SessionManager.setIsLoggedIn = true;
-            Get.back();
+
           }).catchError((error) => print("Failed to add user: $error"));
         });
       } else {

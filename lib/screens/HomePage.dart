@@ -4,7 +4,9 @@ import 'package:flash_chat/screens/CameraScreen.dart';
 import 'package:flash_chat/screens/ChatScreenMain.dart';
 import 'package:flash_chat/screens/SignUpScreen.dart';
 import 'package:flash_chat/screens/StatusScreen.dart';
+import 'package:flash_chat/screens/pages/index.dart';
 import 'package:flash_chat/utils/SessionManager.dart';
+import 'package:flash_chat/utils/Styles.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -22,41 +24,72 @@ class HomeScreen extends StatelessWidget {
     ChatScreenMain(),
     GroupScreen(),
     StatusScreen(),
-    CallScreen()
+    IndexPage()
   ];
 
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      statusBarColor: Colors.blue,
-      statusBarBrightness: Brightness.light,
-    ));
+        statusBarColor: Style.kPrimaryColor,
+        statusBarBrightness: Brightness.light,
+        systemNavigationBarColor: Style.kSecondaryColor,
+        statusBarIconBrightness: Brightness.light));
     return Obx(
       () => GetMaterialApp(
         debugShowCheckedModeBanner: false,
-        theme: SessionManager.myController.isDark.value
-            ? ThemeData.dark()
-            : ThemeData.light(),
+        theme: ThemeData(
+            primarySwatch: Style.kPrimaryColor,
+            brightness: Brightness.light,
+            accentColor:Style.kPrimaryColor,
+
+            primaryColorDark: Style.kSecondaryColor),
+        themeMode: SessionManager.myController.isDark.value
+            ? ThemeMode.dark
+            : ThemeMode.light,
+        darkTheme: ThemeData(
+            brightness: Brightness.dark,
+            primarySwatch: Style.kPrimaryColor,
+            primaryColorDark: Style.kSecondaryColor),
         home: SessionManager.myController.rXisLoggedIn.value
             ? SafeArea(
                 child: Scaffold(
                   body: listOfSCreens[_currentIndex.value],
                   bottomNavigationBar: BottomNavyBar(
                     selectedIndex: _currentIndex.value,
+                    backgroundColor: Style.kPrimaryColor,
                     onItemSelected: (index) {
                       _currentIndex.value = index;
                     },
                     items: <BottomNavyBarItem>[
                       BottomNavyBarItem(
-                          title: Text('Camera'), icon: Icon(Icons.camera)),
+                          title: Text('Camera',
+                              style: Style.kTextStyleNormal
+                                  .copyWith(color: Colors.white)),
+                          icon:
+                              Icon(Icons.camera, color: Style.kSecondaryColor)),
                       BottomNavyBarItem(
-                          title: Text('Chat'), icon: Icon(Icons.chat_bubble)),
+                          title: Text('Chat',
+                              style: Style.kTextStyleNormal
+                                  .copyWith(color: Colors.white)),
+                          icon: Icon(Icons.chat_bubble,
+                              color: Style.kSecondaryColor)),
                       BottomNavyBarItem(
-                          title: Text('Groups'), icon: Icon(Icons.group)),
+                          title: Text('Groups',
+                              style: Style.kTextStyleNormal
+                                  .copyWith(color: Colors.white)),
+                          icon:
+                              Icon(Icons.group, color: Style.kSecondaryColor)),
                       BottomNavyBarItem(
-                          title: Text('Status'), icon: Icon(Icons.rss_feed)),
+                          title: Text('Status',
+                              style: Style.kTextStyleNormal
+                                  .copyWith(color: Colors.white)),
+                          icon: Icon(Icons.rss_feed,
+                              color: Style.kSecondaryColor)),
                       BottomNavyBarItem(
-                          title: Text('Calls'), icon: Icon(Icons.call)),
+                          title: Text('Calls',
+                              style: Style.kTextStyleNormal
+                                  .copyWith(color: Colors.white)),
+                          icon: Icon(Icons.call, color: Style.kSecondaryColor)),
                     ],
                   ),
                 ),
@@ -66,27 +99,3 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
-
-// getWidget(int selectedIndex) {
-// switch (selectedIndex) {
-//   case 0:
-//     return CameraScreen();
-//     break;
-//   case 1:
-//     return ChatScreen();
-//     break;
-//   case 2:
-//     return GroupScreen();
-//     break;
-//   case 3:
-//     return StatusScreen();
-//     break;
-
-//   case 4:
-//     return CallScreen();
-//     break;
-
-//   default:
-//     return Container(color: Colors.blue);
-// }
-//}

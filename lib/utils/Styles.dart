@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 
 class Style {
+  static const kPrimaryColor=Colors.green;
+  static const kSecondaryColor=Colors.white;
   static const kTextStyleBol =
       TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
   static const kTextStyleNormal =
